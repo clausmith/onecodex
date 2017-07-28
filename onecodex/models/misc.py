@@ -19,7 +19,7 @@ class Projects(OneCodexBase):
 
     @classmethod
     def search_public(cls, *filters, **keyword_filters):
-        keyword_filters['_instances'] = 'instances_public'
+        keyword_filters['public'] = True
         keyword_filters['limit'] = 100
         return cls.where(*filters, **keyword_filters)
 

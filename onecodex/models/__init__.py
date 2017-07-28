@@ -199,6 +199,10 @@ class OneCodexBase(object):
 
         instances_route = keyword_filters.pop('_instances', 'instances')
 
+        public = keyword_filters.pop('public', False)
+        if public:
+            instances_route = 'instances_public'
+
         schema = next(l for l in cls._resource._schema['links'] if l['rel'] == instances_route)
         sort_schema = schema['schema']['properties']['sort']['properties']
         where_schema = schema['schema']['properties']['where']['properties']

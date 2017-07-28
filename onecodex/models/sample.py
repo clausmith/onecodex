@@ -7,6 +7,7 @@ from six import string_types
 
 from onecodex.exceptions import OneCodexException
 from onecodex.models import OneCodexBase
+from onecodex.models.misc import Projects, Tags
 from onecodex.models.helpers import truncate_string
 from onecodex.lib.upload import upload  # upload_file
 
@@ -21,7 +22,26 @@ class Samples(OneCodexBase):
     @classmethod
     def where(cls, *filters, **keyword_filters):
         instances_route = keyword_filters.get('_instances', 'instances')
-        limit = keyword_filters.pop('limit', None)
+        limit = keyword_filters.get('limit', None)
+
+        # If there's a filter for project_name, convert that into into a project ID
+        projects = None
+        project_name = keyword_filters.pop('project_name', None)
+        if project_name and 'project' in keyword_filters:
+            raise OneCodexException('You cannot query samples by both project and project_name parameters.')
+
+        if project_name:
+            projects = Projects.where(name=project_name)
+        if projects:
+            keyword_filters['project'] = projects[0].id
+
+        # If there's a filter for tag_name, convert that into a list of Tag ID's
+        tag_name = keyword_filters.pop('tag_name', None)
+        if tag_name and 'tags' in keyword_filters:
+            raise OneCodexException('You cannot query samples by both tags and tag_name parameters.')
+        if tag_name:
+            tags = Tags.where(name=tag_name)
+            keyword_filters['tags'] = tags
 
         # we can only search metadata on our own samples currently
         # FIXME: we need to add `instances_public` and `instances_project` metadata routes to
@@ -78,7 +98,7 @@ class Samples(OneCodexBase):
 
     @classmethod
     def search_public(cls, *filters, **keyword_filters):
-        keyword_filters['_instances'] = 'instances_public'
+        keyword_filters['public'] = True
         keyword_filters['limit'] = 100
         return cls.where(*filters, **keyword_filters)
 
